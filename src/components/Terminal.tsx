@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { profile, projects, skills } from "../data/portfolio";
+import { scrollToSection } from "../utils/scroll";
 
 type LineType = "input" | "output" | "success" | "error" | "hint";
 
@@ -16,19 +17,23 @@ const WELCOME: Line[] = [
   { type: "hint", text: "Type 'help' for commands · press ~ anywhere to focus" },
 ];
 
-function scrollToSection(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
+type CommandResult = {
+  lines: Line[];
+  navigateTo?: string;
+};
 
-function runCommand(raw: string): Line[] {
+function runCommand(raw: string): CommandResult {
   const cmd = raw.trim().toLowerCase();
 
-  if (!cmd) return [];
+  if (!cmd) return { lines: [] };
 
-  if (cmd === "clear") return [{ type: "success", text: "__CLEAR__" }];
+  if (cmd === "clear") {
+    return { lines: [{ type: "success", text: "__CLEAR__" }] };
+  }
 
   if (cmd === "help") {
-    return [
+    return {
+      lines: [
       { type: "output", text: "Available commands:" },
       { type: "hint", text: "  help        — show this message" },
       { type: "hint", text: "  whoami      — who am i?" },
@@ -40,82 +45,106 @@ function runCommand(raw: string): Line[] {
       { type: "hint", text: "  contact     — navigate to contact" },
       { type: "hint", text: "  github      — open github profile" },
       { type: "hint", text: "  clear       — clear terminal" },
-    ];
+      ],
+    };
   }
 
   if (cmd === "whoami") {
-    return [
+    return {
+      lines: [
       { type: "success", text: profile.name },
       { type: "output", text: profile.title },
       { type: "output", text: profile.location },
       { type: "output", text: profile.email },
-    ];
+      ],
+    };
   }
 
   if (cmd === "about") {
-    scrollToSection("about");
-    return [{ type: "success", text: "→ scrolling to #about" }];
+    return {
+      navigateTo: "about",
+      lines: [{ type: "success", text: "→ scrolling to #about" }],
+    };
   }
 
   if (cmd === "skills") {
-    scrollToSection("skills");
     const flat = skills.flatMap((s) => s.items).slice(0, 12);
-    return [
-      { type: "success", text: "→ scrolling to #skills" },
-      { type: "output", text: flat.join(" · ") },
-    ];
+    return {
+      navigateTo: "skills",
+      lines: [
+        { type: "success", text: "→ scrolling to #skills" },
+        { type: "output", text: flat.join(" · ") },
+      ],
+    };
   }
 
   if (cmd === "experience") {
-    scrollToSection("experience");
-    return [{ type: "success", text: "→ scrolling to #experience" }];
+    return {
+      navigateTo: "experience",
+      lines: [{ type: "success", text: "→ scrolling to #experience" }],
+    };
   }
 
   if (cmd === "activity" || cmd === "github-activity") {
-    scrollToSection("github");
-    return [{ type: "success", text: "→ scrolling to #github" }];
+    return {
+      navigateTo: "github",
+      lines: [{ type: "success", text: "→ scrolling to #github" }],
+    };
   }
 
   if (cmd === "contact") {
-    scrollToSection("contact");
-    return [
-      { type: "success", text: "→ scrolling to #contact" },
-      { type: "output", text: profile.email },
-    ];
+    return {
+      navigateTo: "contact",
+      lines: [
+        { type: "success", text: "→ scrolling to #contact" },
+        { type: "output", text: profile.email },
+      ],
+    };
   }
 
   if (cmd === "projects") {
-    scrollToSection("projects");
-    return [
-      { type: "success", text: "→ scrolling to #projects" },
-      ...projects.map((p) => ({
-        type: "output" as const,
-        text: `  ${p.name} — ${p.subtitle}`,
-      })),
-    ];
+    return {
+      navigateTo: "projects",
+      lines: [
+        { type: "success", text: "→ scrolling to #projects" },
+        ...projects.map((p) => ({
+          type: "output" as const,
+          text: `  ${p.name} — ${p.subtitle}`,
+        })),
+      ],
+    };
   }
 
   if (cmd === "github") {
     window.open(profile.github, "_blank", "noopener,noreferrer");
-    return [{ type: "success", text: `→ opening ${profile.github}` }];
+    return {
+      lines: [{ type: "success", text: `→ opening ${profile.github}` }],
+    };
   }
 
   if (cmd === "ls") {
-    return [
-      { type: "output", text: "logstream/  flowd/  gateway/  chirpy/  README.md" },
-    ];
+    return {
+      lines: [
+        {
+          type: "output",
+          text: "logstream/  flowd/  gateway/  chirpy/  README.md",
+        },
+      ],
+    };
   }
 
   if (cmd === "cat readme.md") {
-    return [{ type: "output", text: profile.tagline }];
+    return { lines: [{ type: "output", text: profile.tagline }] };
   }
 
-  return [
-    {
-      type: "error",
-      text: `command not found: ${cmd}. Type 'help' for available commands.`,
-    },
-  ];
+  return {
+    lines: [
+      {
+        type: "error",
+        text: `command not found: ${cmd}. Type 'help' for available commands.`,
+      },
+    ],
+  };
 }
 
 const lineClass: Record<LineType, string> = {
@@ -132,16 +161,22 @@ export function Terminal() {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const scrollTerminalToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
 
   const focusInput = useCallback(() => {
     inputRef.current?.focus();
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, []);
+    scrollTerminalToBottom();
+  }, [scrollTerminalToBottom]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lines]);
+    scrollTerminalToBottom();
+  }, [lines, scrollTerminalToBottom]);
 
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
@@ -165,16 +200,22 @@ export function Terminal() {
     setHistoryIdx(-1);
 
     const result = runCommand(trimmed);
-    if (result[0]?.text === "__CLEAR__") {
+    if (result.lines[0]?.text === "__CLEAR__") {
       setLines(WELCOME);
     } else {
       setLines((prev) => [
         ...prev,
         { type: "input", text: `$ ${trimmed}` },
-        ...result,
+        ...result.lines,
       ]);
     }
     setInput("");
+
+    if (result.navigateTo) {
+      requestAnimationFrame(() => {
+        scrollToSection(result.navigateTo!);
+      });
+    }
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -219,7 +260,10 @@ export function Terminal() {
         </span>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed md:text-sm">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed md:text-sm"
+      >
         {lines.map((line, i) => (
           <p key={i} className={lineClass[line.type]}>
             {line.text}

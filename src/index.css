@@ -24,6 +24,16 @@ html {
   scroll-behavior: smooth;
 }
 
+section[id] {
+  scroll-margin-top: 6rem;
+}
+
+@media (min-width: 1280px) {
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-bg);
