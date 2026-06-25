@@ -145,3 +145,24 @@ body {
   @apply border-green-500/40 bg-green-500/5 text-green-400;
   transform: translateY(-1px);
 }
+
+@keyframes pipeline-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.pipeline-pulse {
+  animation: pipeline-pulse 1.5s ease-in-out infinite;
+}
+
+.arch-node {
+  transition: transform 0.3s ease;
+}
+
+.arch-diagram:hover .arch-node {
+  transform: scale(1.02);
+}
+
+.arch-packet {
+  filter: drop-shadow(0 0 4px #4ade80);
+}

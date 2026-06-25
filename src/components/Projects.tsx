@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { achievements, projects } from "../data/portfolio";
+import { architectures } from "../data/architectures";
+import { ArchitectureDiagram } from "./ArchitectureDiagram";
 import { Reveal } from "./Reveal";
 import { SectionLabel } from "./About";
 
@@ -9,6 +12,9 @@ function ProjectCard({
   project: (typeof projects)[number];
   className?: string;
 }) {
+  const [showArch, setShowArch] = useState(project.featured ?? false);
+  const arch = architectures[project.id];
+
   return (
     <article
       className={`project-card p-6 md:p-7 ${className}`}
@@ -74,6 +80,22 @@ function ProjectCard({
           </li>
         ))}
       </ul>
+
+      {arch && (
+        <>
+          <button
+            type="button"
+            onClick={() => setShowArch(!showArch)}
+            className="mt-5 flex items-center gap-2 font-mono text-xs text-green-400 transition-colors hover:text-green-300"
+          >
+            <span className={`transition-transform ${showArch ? "rotate-90" : ""}`}>
+              ›
+            </span>
+            {showArch ? "hide" : "view"} architecture
+          </button>
+          {showArch && <ArchitectureDiagram arch={arch} />}
+        </>
+      )}
     </article>
   );
 }

@@ -34,9 +34,9 @@ export function About() {
               </p>
               <p className="mt-4 text-lg leading-relaxed text-text-muted">
                 Recent work spans geospatial query optimization at{" "}
-                <span className="text-text">Amasqis.ai</span>, a Kafka-powered
-                log engine processing 50M+ events/day, and Postgres-backed
-                distributed queues with idempotent guarantees.
+                <span className="text-text">Amasqis.ai</span>, a Kafka log
+                pipeline load-tested to ~1.8K events/sec, and Postgres-backed
+                job queues with idempotent enqueue semantics.
               </p>
             </div>
           </Reveal>

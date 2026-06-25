@@ -4,7 +4,7 @@ import { profile } from "../data/portfolio";
 
 export function Hero() {
   return (
-    <section className="relative min-h-[90vh] overflow-hidden pt-28 pb-16 md:pt-36">
+    <section id="hero" className="relative min-h-[90vh] overflow-hidden pt-28 pb-16 md:pt-36">
       <NetworkCanvas />
       <div className="noise pointer-events-none absolute inset-0" />
       <div className="glow-orb pointer-events-none absolute -top-20 right-0 h-[600px] w-[600px] opacity-60" />
